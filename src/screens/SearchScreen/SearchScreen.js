@@ -1,172 +1,172 @@
-// src/screens/SearchScreen/SearchScreen.js
+// src/screens/SearchScreen/SearchScreen.js - Basit versiyon
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Searchbar, Text, Chip, Card, Button } from 'react-native-paper';
+import { Searchbar, Text, Chip, ActivityIndicator } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
+import ProductList from '../../components/ProductList/ProductList';
+import productService from '../../services/productService';
 
 export default function SearchScreen({ route, navigation }) {
   const [query, setQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  
+  const [products, setProducts] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   // Route params'tan gelen initial değerler
-  const { initialQuery, initialCategory } = route.params || {};
+  const { initialQuery } = route.params || {};
+
+  useEffect(() => {
+    loadAllProducts();
+  }, []);
 
   useEffect(() => {
     if (initialQuery) {
       setQuery(initialQuery);
     }
-    if (initialCategory) {
-      setSelectedCategory(initialCategory);
+  }, [initialQuery]);
+
+  useEffect(() => {
+    performSearch();
+  }, [query, products]);
+
+  const loadAllProducts = async () => {
+    try {
+      setLoading(true);
+      const allProducts = await productService.getAllProducts();
+      setProducts(allProducts);
+    } catch (error) {
+      console.error('❌ Search: Error loading products:', error);
+    } finally {
+      setLoading(false);
     }
-  }, [initialQuery, initialCategory]);
-
-  const categories = [
-    { id: 'cerceveler', name: 'Çerçeveler', icon: 'image-outline', color: '#2E7D32' },
-    { id: 'paspartolar', name: 'Paspartolar', icon: 'layers-outline', color: '#8D6E63' },
-    { id: 'aksesuarlar', name: 'Aksesuarlar', icon: 'construct-outline', color: '#5D4037' },
-  ];
-
-  const popularSearches = ['vintage', 'modern', 'ahşap', 'metal', 'yeşil', 'beyaz', 'siyah', 'küçük'];
-  const colors = ['beyaz', 'siyah', 'kahverengi', 'yeşil', 'mavi', 'kırmızı'];
-  const materials = ['ahşap', 'metal', 'plastik', 'cam'];
-
-  const handleCategoryPress = (categoryId) => {
-    setSelectedCategory(selectedCategory === categoryId ? null : categoryId);
   };
 
-  const handleSearch = () => {
-    // Buraya gerçek arama fonksiyonu gelecek
-    console.log('Arama:', { query, selectedCategory });
+  const performSearch = () => {
+    if (!query || query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    console.log('🔍 Searching for:', query);
+    
+    // Basit tag araması
+    const results = products.filter(product => {
+      if (!product.tags || !Array.isArray(product.tags)) return false;
+      
+      return product.tags.some(tag => 
+        tag.toLowerCase().includes(query.toLowerCase())
+      );
+    });
+
+    console.log('✅ Found:', results.length, 'products');
+    setSearchResults(results);
+  };
+
+  const handleProductPress = (product) => {
+    console.log('📱 Product pressed:', product.id);
+    // navigation.navigate('ProductDetail', { product });
+  };
+
+  const popularTags = ['20mm', 'ceviz', 'parlak', 'altin', 'çerçeve', 'B', 'G'];
+
+  const renderEmptyState = () => {
+    if (loading) {
+      return (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Ürünler yükleniyor...</Text>
+        </View>
+      );
+    }
+
+    if (!query) {
+      return (
+        <View style={styles.centerContainer}>
+          <Ionicons name="search" size={64} color={theme.colors.disabled} />
+          <Text variant="headlineSmall" style={styles.emptyTitle}>
+            Arama Yapın
+          </Text>
+          <Text variant="bodyMedium" style={styles.emptyDescription}>
+            Ürünleri bulmak için yukarıdaki arama çubuğunu kullanın
+          </Text>
+        </View>
+      );
+    }
+
+    if (searchResults.length === 0) {
+      return (
+        <View style={styles.centerContainer}>
+          <Ionicons name="sad-outline" size={64} color={theme.colors.disabled} />
+          <Text variant="headlineSmall" style={styles.emptyTitle}>
+            Sonuç Bulunamadı
+          </Text>
+          <Text variant="bodyMedium" style={styles.emptyDescription}>
+            "{query}" için eşleşen ürün bulunamadı.{'\n'}
+            Farklı kelimeler deneyin.
+          </Text>
+        </View>
+      );
+    }
+
+    return null;
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       {/* Arama Çubuğu */}
       <View style={styles.searchContainer}>
         <Searchbar
-          placeholder="Ürün ara... (örn: yeşil çerçeve, vintage)"
+          placeholder="Etiketlerde ara... (örn: 20mm, ceviz, altin)"
           onChangeText={setQuery}
           value={query}
           style={styles.searchbar}
           iconColor={theme.colors.primary}
-          onSubmitEditing={handleSearch}
         />
       </View>
 
-      {/* Kategori Filtreleri */}
+      {/* Popüler Etiketler */}
       <View style={styles.section}>
         <Text variant="titleMedium" style={styles.sectionTitle}>
-          Kategoriler
-        </Text>
-        <View style={styles.categoryContainer}>
-          {categories.map((category) => (
-            <Chip
-              key={category.id}
-              mode={selectedCategory === category.id ? 'flat' : 'outlined'}
-              selected={selectedCategory === category.id}
-              onPress={() => handleCategoryPress(category.id)}
-              style={[
-                styles.categoryChip,
-                selectedCategory === category.id && { backgroundColor: category.color + '20' }
-              ]}
-              icon={category.icon}
-            >
-              {category.name}
-            </Chip>
-          ))}
-        </View>
-      </View>
-
-      {/* Popüler Aramalar */}
-      <View style={styles.section}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>
-          Popüler Aramalar
+          Popüler Etiketler
         </Text>
         <View style={styles.tagsContainer}>
-          {popularSearches.map((search) => (
+          {popularTags.map((tag) => (
             <Chip
-              key={search}
+              key={tag}
               mode="outlined"
-              onPress={() => setQuery(search)}
+              onPress={() => setQuery(tag)}
               style={styles.popularChip}
               compact
             >
-              {search}
+              {tag}
             </Chip>
           ))}
         </View>
       </View>
 
-      {/* Renk Filtreleri */}
-      <View style={styles.section}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>
-          Renkler
-        </Text>
-        <View style={styles.tagsContainer}>
-          {colors.map((color) => (
-            <Chip
-              key={color}
-              mode="outlined"
-              onPress={() => setQuery(color)}
-              style={styles.colorChip}
-              compact
-            >
-              {color}
-            </Chip>
-          ))}
+      {/* Sonuçlar */}
+      {searchResults.length > 0 ? (
+        <View style={styles.resultsContainer}>
+          <View style={styles.resultsHeader}>
+            <Text variant="titleMedium" style={styles.resultsTitle}>
+              Arama Sonuçları
+            </Text>
+            <Text variant="bodySmall" style={styles.resultsCount}>
+              {searchResults.length} ürün bulundu
+            </Text>
+          </View>
+          
+          <ProductList
+            products={searchResults}
+            onProductPress={handleProductPress}
+            numColumns={2}
+          />
         </View>
-      </View>
-
-      {/* Malzeme Filtreleri */}
-      <View style={styles.section}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>
-          Malzemeler
-        </Text>
-        <View style={styles.tagsContainer}>
-          {materials.map((material) => (
-            <Chip
-              key={material}
-              mode="outlined"
-              onPress={() => setQuery(material)}
-              style={styles.materialChip}
-              compact
-            >
-              {material}
-            </Chip>
-          ))}
-        </View>
-      </View>
-
-      {/* Arama Sonuçları Placeholder */}
-      {(query || selectedCategory) && (
-        <View style={styles.section}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Arama Sonuçları
-          </Text>
-          <Card style={styles.resultCard}>
-            <Card.Content>
-              <View style={styles.resultContent}>
-                <Ionicons name="search" size={48} color={theme.colors.primary} />
-                <Text variant="titleLarge" style={styles.resultTitle}>
-                  Arama Sistemi Hazırlanıyor
-                </Text>
-                <Text variant="bodyMedium" style={styles.resultDescription}>
-                  Yakında "{query}" için sonuçları gösterebileceğiz
-                </Text>
-                {selectedCategory && (
-                  <Text variant="bodySmall" style={styles.resultCategory}>
-                    Kategori: {categories.find(c => c.id === selectedCategory)?.name}
-                  </Text>
-                )}
-              </View>
-            </Card.Content>
-          </Card>
-        </View>
+      ) : (
+        renderEmptyState()
       )}
-
-      <View style={styles.bottomSpacer} />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -191,14 +191,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
     fontWeight: '600',
   },
-  categoryContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-  },
-  categoryChip: {
-    marginBottom: theme.spacing.sm,
-  },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -208,41 +200,44 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
     backgroundColor: theme.colors.primaryContainer,
   },
-  colorChip: {
-    marginBottom: theme.spacing.sm,
-    backgroundColor: '#FFF3E0',
+  resultsContainer: {
+    flex: 1,
   },
-  materialChip: {
-    marginBottom: theme.spacing.sm,
-    backgroundColor: '#F3E5F5',
+  resultsHeader: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.outline,
   },
-  resultCard: {
-    elevation: 4,
-    borderRadius: 12,
-  },
-  resultContent: {
-    alignItems: 'center',
-    padding: theme.spacing.lg,
-  },
-  resultTitle: {
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-    textAlign: 'center',
-    color: theme.colors.primary,
+  resultsTitle: {
+    color: theme.colors.onSurface,
     fontWeight: '600',
+    marginBottom: theme.spacing.xs,
   },
-  resultDescription: {
-    textAlign: 'center',
+  resultsCount: {
     color: theme.colors.onSurface,
     opacity: 0.7,
-    marginBottom: theme.spacing.sm,
   },
-  resultCategory: {
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
+  },
+  loadingText: {
+    marginTop: theme.spacing.md,
+    color: theme.colors.onBackground,
+  },
+  emptyTitle: {
     textAlign: 'center',
-    color: theme.colors.primary,
-    fontStyle: 'italic',
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.onBackground,
   },
-  bottomSpacer: {
-    height: theme.spacing.lg,
+  emptyDescription: {
+    textAlign: 'center',
+    color: theme.colors.onBackground,
+    opacity: 0.7,
+    lineHeight: 20,
   },
 });

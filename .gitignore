@@ -2,6 +2,11 @@
 
 # dependencies
 node_modules/
+# .gitignore içine ekle
+.env
+
+# .gitignore içine ekle
+src/services/firebaseConfig.js
 
 # Expo
 .expo/

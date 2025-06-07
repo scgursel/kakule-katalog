@@ -1,7 +1,4 @@
-
-
-
-// src/screens/CategoryScreen/CategoryScreen.js
+// src/screens/CategoryScreen/CategoryScreen.js - Basit versiyon
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Text, Card, Chip, Button, ActivityIndicator, Searchbar } from 'react-native-paper';
@@ -10,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import productService from '../../services/productService';
 
-
 export default function CategoryScreen({ route, navigation }) {
   const { category } = route.params;
   const [products, setProducts] = useState([]);
@@ -18,19 +14,20 @@ export default function CategoryScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-
-
   useEffect(() => {
     loadProducts();
   }, [category]);
 
   useEffect(() => {
-    // Arama filtresi
+    // Basit arama - sadece tag'larda ara
     if (searchQuery) {
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+      const filtered = products.filter(product => {
+        if (!product.tags || !Array.isArray(product.tags)) return false;
+        
+        return product.tags.some(tag => 
+          tag.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      });
       setFilteredProducts(filtered);
     } else {
       setFilteredProducts(products);
@@ -40,16 +37,28 @@ export default function CategoryScreen({ route, navigation }) {
   const loadProducts = async () => {
     try {
       setLoading(true);
+      console.log('🔍 Loading products for category:', category.id);
 
       const categoryProducts = await productService.getProductsByCategory(category.id);
+      console.log('✅ Loaded products:', categoryProducts.length, categoryProducts);
+      
       setProducts(categoryProducts);
       setFilteredProducts(categoryProducts);
-      setLoading(false);
-
     } catch (error) {
-      console.error('Ürünler yüklenirken hata:', error);
+      console.error('❌ Error loading products:', error);
+    } finally {
       setLoading(false);
     }
+  };
+
+  const handleProductPress = (product) => {
+    console.log('📱 Product pressed:', product.id);
+    // navigation.navigate('ProductDetail', { product });
+  };
+
+  const handleTagPress = (tag) => {
+    console.log('🏷️ Tag pressed:', tag);
+    setSearchQuery(tag);
   };
 
   const renderProduct = ({ item }) => (
@@ -73,9 +82,6 @@ export default function CategoryScreen({ route, navigation }) {
           {item.featured && (
             <Chip style={styles.featuredBadge} compact>⭐ Öne Çıkan</Chip>
           )}
-          {!item.availability && (
-            <Chip style={styles.unavailableBadge} compact>Stokta Yok</Chip>
-          )}
         </View>
       </View>
 
@@ -84,58 +90,83 @@ export default function CategoryScreen({ route, navigation }) {
           {item.name}
         </Text>
 
+        {item.productCode && (
+          <Text variant="bodySmall" style={styles.productCode}>
+            Kod: {item.productCode}
+          </Text>
+        )}
+
         <Text variant="bodySmall" style={styles.productDescription} numberOfLines={2}>
-          {item.shortDescription}
+          {item.shortDescription || item.description}
         </Text>
 
-        {/* Specs */}
+        {/* Specs - Kompakt chip'ler */}
         <View style={styles.specsContainer}>
-          <Chip mode="outlined" compact style={styles.specChip}>
-            {item.specs?.material}
-          </Chip>
-          <Chip mode="outlined" compact style={styles.specChip}>
-            {item.specs?.color}
-          </Chip>
-          <Chip mode="outlined" compact style={styles.specChip}>
-            {item.specs?.dimensions}
-          </Chip>
-        </View>
-
-        {/* Price */}
-        <Text variant="titleLarge" style={styles.price}>
-          {item.price}
-        </Text>
-
-        {/* Tags */}
-        <View style={styles.tagsContainer}>
-          {item.tags.slice(0, 3).map((tag, index) => (
-            <Chip
-              key={index}
-              mode="outlined"
-              compact
-              style={styles.tagChip}
-              textStyle={styles.tagText}
+          {item.specs?.width && (
+            <Chip 
+              mode="outlined" 
+              compact 
+              style={styles.specChip} 
+              textStyle={styles.specText}
+              contentStyle={styles.specContent}
             >
-              {tag}
+              {item.specs.width}
             </Chip>
-          ))}
-          {item.tags.length > 3 && (
-            <Text style={styles.moreTagsText}>+{item.tags.length - 3}</Text>
+          )}
+          {item.specs?.color && (
+            <Chip 
+              mode="outlined" 
+              compact 
+              style={styles.specChip} 
+              textStyle={styles.specText}
+              contentStyle={styles.specContent}
+            >
+              {item.specs.color}
+            </Chip>
           )}
         </View>
+
+        {/* Tags - Ultra kompakt */}
+        {item.tags && Array.isArray(item.tags) && item.tags.length > 0 && (
+          <View style={styles.tagsContainer}>
+            <Text variant="bodySmall" style={styles.tagsLabel}>
+              Etiketler:
+            </Text>
+            <View style={styles.tagsRow}>
+              {item.tags.slice(0, 4).map((tag, index) => (
+                <Chip
+                  key={index}
+                  mode="outlined"
+                  compact
+                  style={styles.tagChip}
+                  textStyle={styles.tagText}
+                  contentStyle={styles.tagContent}
+                  onPress={() => handleTagPress(tag)}
+                >
+                  {tag}
+                </Chip>
+              ))}
+              {item.tags.length > 4 && (
+                <Text style={styles.moreTagsText}>+{item.tags.length - 4}</Text>
+              )}
+            </View>
+          </View>
+        )}
       </Card.Content>
 
       <Card.Actions>
         <Button
           mode="outlined"
-          onPress={() => {/* Detay sayfasına git */ }}
+          onPress={() => handleProductPress(item)}
           style={styles.detailButton}
         >
           Detay
         </Button>
         <Button
           mode="contained"
-          onPress={() => {/* Teklif Al */ }}
+          onPress={() => {
+            console.log('📞 Teklif istendi:', item.name);
+          }}
           style={styles.quoteButton}
         >
           Teklif Al
@@ -168,10 +199,10 @@ export default function CategoryScreen({ route, navigation }) {
         </Text>
       </View>
 
-      {/* Arama */}
+      {/* Basit Arama */}
       <View style={styles.searchContainer}>
         <Searchbar
-          placeholder={`${category.name} içinde ara...`}
+          placeholder="Etiketlerde ara... (örn: 20mm, ceviz, altin)"
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchbar}
@@ -190,10 +221,13 @@ export default function CategoryScreen({ route, navigation }) {
           <View style={styles.emptyContainer}>
             <Ionicons name="search" size={64} color={theme.colors.disabled} />
             <Text variant="headlineSmall" style={styles.emptyTitle}>
-              Ürün bulunamadı
+              {searchQuery ? 'Sonuç Bulunamadı' : 'Ürün Bulunamadı'}
             </Text>
             <Text variant="bodyMedium" style={styles.emptyDescription}>
-              Bu kategoride henüz ürün bulunmuyor
+              {searchQuery 
+                ? `"${searchQuery}" için eşleşen ürün bulunamadı`
+                : 'Bu kategoride henüz ürün bulunmuyor'
+              }
             </Text>
           </View>
         )}
@@ -277,15 +311,17 @@ const styles = StyleSheet.create({
   featuredBadge: {
     backgroundColor: '#FFD700',
   },
-  unavailableBadge: {
-    backgroundColor: theme.colors.error,
-  },
   productContent: {
     padding: theme.spacing.md,
   },
   productName: {
     fontWeight: '600',
     color: theme.colors.onSurface,
+    marginBottom: theme.spacing.xs,
+  },
+  productCode: {
+    color: theme.colors.primary,
+    fontWeight: '500',
     marginBottom: theme.spacing.xs,
   },
   productDescription: {
@@ -300,31 +336,61 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   specChip: {
-    height: 24,
+    height: 28, // Yükseklik artırıldı
+    backgroundColor: theme.colors.secondaryContainer,
+    paddingHorizontal: 6,
+    marginHorizontal: 2,
   },
-  price: {
-    color: theme.colors.primary,
-    fontWeight: 'bold',
-    marginBottom: theme.spacing.sm,
+  specText: {
+    fontSize: 10, // Yazı biraz büyütüldü
+    lineHeight: 14,
+  },
+  specContent: {
+    paddingHorizontal: 4,
+    paddingVertical: 2, // Dikey padding eklendi
+    marginHorizontal: 0,
+    marginVertical: 0,
   },
   tagsContainer: {
+    marginBottom: theme.spacing.sm,
+  },
+  tagsLabel: {
+    color: theme.colors.onSurface,
+    fontWeight: '500',
+    marginBottom: theme.spacing.xs,
+    fontSize: 11,
+  },
+  tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.xs,
+    gap: 3,
     alignItems: 'center',
   },
   tagChip: {
-    height: 20,
+    height: 28, // Yükseklik artırıldı
     backgroundColor: theme.colors.primaryContainer,
+    paddingHorizontal: 4,
+    marginVertical: 1,
+    marginHorizontal: 1,
+    minWidth: 30,
   },
   tagText: {
-    fontSize: 10,
-    color: theme.colors.primary,
-  },
-  moreTagsText: {
-    fontSize: 10,
+    fontSize: 9, // Yazı biraz büyütüldü
     color: theme.colors.primary,
     fontWeight: '500',
+    lineHeight: 12,
+  },
+  tagContent: {
+    paddingHorizontal: 2,
+    paddingVertical: 2, // Dikey padding eklendi
+    marginHorizontal: 0,
+    marginVertical: 0,
+  },
+  moreTagsText: {
+    fontSize: 9,
+    color: theme.colors.primary,
+    fontWeight: '500',
+    marginLeft: 2,
   },
   detailButton: {
     borderColor: theme.colors.primary,
