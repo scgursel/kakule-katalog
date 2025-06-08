@@ -1,7 +1,6 @@
-// App.js - Stack Navigation ile
+// App.js
 import 'react-native-gesture-handler';
 import React from 'react';
-import { View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -9,6 +8,7 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from './src/constants/theme';
+import { fontSize, responsiveValue } from './src/utils/responsive';
 import HomeScreen from './src/screens/HomeScreen/HomeScreen';
 import SearchScreen from './src/screens/SearchScreen/SearchScreen';
 import CategoryScreen from './src/screens/CategoryScreen/CategoryScreen';
@@ -27,21 +27,54 @@ function TabNavigator() {
           } else if (route.name === 'Search') {
             iconName = focused ? 'search' : 'search-outline';
           }
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <Ionicons name={iconName} size={responsiveValue(22, 24, 26)} color={color} />;
         },
-        tabBarActiveTintColor: '#2E7D32',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: theme.colors.surface,
+          borderTopColor: theme.colors.outline,
+          height: responsiveValue(60, 65, 70),
+          paddingBottom: responsiveValue(5, 8, 10),
+          paddingTop: responsiveValue(5, 8, 10),
+        },
+        tabBarLabelStyle: {
+          fontSize: fontSize.xs,
+          fontWeight: '500',
+        },
         headerStyle: {
-          backgroundColor: '#2E7D32',
+          backgroundColor: theme.colors.primary,
+          height: responsiveValue(56, 60, 64),
         },
-        headerTintColor: '#fff',
+        headerTintColor: theme.colors.onPrimary,
         headerTitleStyle: {
           fontWeight: 'bold',
+          fontSize: fontSize.lg,
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Ana Sayfa' }} />
-      <Tab.Screen name="Search" component={SearchScreen} options={{ title: 'Arama' }} />
+      <Tab.Screen 
+        name="Home" 
+        component={HomeScreen} 
+        options={{ 
+          title: 'Ana Sayfa',
+          headerShown: false,
+        }} 
+      />
+      <Tab.Screen 
+        name="Search" 
+        component={SearchScreen} 
+        options={{ 
+          title: 'Arama',
+          headerStyle: {
+            backgroundColor: theme.colors.surface,
+            elevation: 0,
+            shadowOpacity: 0,
+            borderBottomWidth: 0,
+          },
+          headerTintColor: theme.colors.onSurface,
+        }} 
+      />
     </Tab.Navigator>
   );
 }
@@ -51,12 +84,16 @@ function MainStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#2E7D32',
+          backgroundColor: theme.colors.primary,
+          height: responsiveValue(56, 60, 64),
         },
-        headerTintColor: '#fff',
+        headerTintColor: theme.colors.onPrimary,
         headerTitleStyle: {
           fontWeight: 'bold',
+          fontSize: fontSize.lg,
         },
+        headerBackTitleVisible: false,
+        headerTitleAlign: 'center',
       }}
     >
       <Stack.Screen 
@@ -68,7 +105,11 @@ function MainStack() {
         name="Category" 
         component={CategoryScreen} 
         options={({ route }) => ({ 
-          title: route.params?.category?.name || 'Kategori' 
+          title: route.params?.category?.name || 'Kategori',
+          headerStyle: {
+            backgroundColor: route.params?.category?.color || theme.colors.primary,
+            height: responsiveValue(56, 60, 64),
+          },
         })} 
       />
     </Stack.Navigator>

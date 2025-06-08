@@ -1,76 +1,109 @@
 // src/components/ProductList/ProductList.js
 import React from 'react';
-import { FlatList, View, StyleSheet, Dimensions } from 'react-native';
+import { FlatList, View, StyleSheet } from 'react-native';
 import ProductCard from '../ProductCard/ProductCard';
 import { theme } from '../../constants/theme';
-
-const { width } = Dimensions.get('window');
-const ITEM_WIDTH = (width - theme.spacing.md * 3) / 2; // 2 kolon için
+import { 
+  getColumns, 
+  getCardWidth, 
+  spacing,
+  isTablet,
+  responsiveValue
+} from '../../utils/responsive';
 
 export default function ProductList({ 
   products = [], 
   onProductPress, 
   showRelevanceScore = false,
-  numColumns = 2,
-  horizontal = false 
+  numColumns = null,
+  horizontal = false,
+  compact = false 
 }) {
+  // Otomatik kolon sayısı hesapla
+  const columns = numColumns || getColumns();
+  const containerPadding = spacing.md;
+  
+  // Kart genişliği hesapla
+  const cardWidth = horizontal 
+    ? responsiveValue(150, 180, 200) 
+    : getCardWidth(columns, containerPadding);
+
   const renderProduct = ({ item, index }) => (
     <ProductCard
       product={item}
       onPress={() => onProductPress(item)}
       showRelevanceScore={showRelevanceScore}
-      style={numColumns === 2 ? styles.gridItem : styles.listItem}
-      width={numColumns === 2 ? ITEM_WIDTH : undefined}
+      style={columns > 1 ? styles.gridItem : styles.listItem}
+      width={columns > 1 ? cardWidth : undefined}
+      compact={compact || columns > 2}
     />
   );
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      {/* Bu boş liste durumu SearchScreen'de handle ediliyor */}
+      {/* Bu boş liste durumu ekranlarda handle ediliyor */}
     </View>
   );
+
+  const ItemSeparatorComponent = () => (
+    <View style={{ height: spacing.sm, width: spacing.sm }} />
+  );
+
+  const getItemLayout = (data, index) => ({
+    length: cardWidth + spacing.sm,
+    offset: (cardWidth + spacing.sm) * index,
+    index,
+  });
 
   return (
     <FlatList
       data={products}
       renderItem={renderProduct}
       keyExtractor={(item) => item.id}
-      numColumns={horizontal ? 1 : numColumns}
+      numColumns={horizontal ? 1 : columns}
       horizontal={horizontal}
       showsHorizontalScrollIndicator={false}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[
         styles.container,
-        horizontal && styles.horizontalContainer
+        horizontal && styles.horizontalContainer,
+        products.length === 0 && styles.emptyContentContainer
       ]}
-      columnWrapperStyle={numColumns === 2 && !horizontal ? styles.row : null}
+      columnWrapperStyle={columns > 1 && !horizontal ? styles.row : null}
       ListEmptyComponent={renderEmpty}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      ItemSeparatorComponent={ItemSeparatorComponent}
+      getItemLayout={horizontal ? getItemLayout : undefined}
+      // Performans optimizasyonları
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={10}
+      initialNumToRender={10}
+      windowSize={10}
     />
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: theme.spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
   },
   horizontalContainer: {
-    paddingVertical: theme.spacing.md,
+    paddingVertical: spacing.sm,
   },
   row: {
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.md,
+    marginBottom: spacing.sm,
   },
   gridItem: {
-    marginBottom: theme.spacing.md,
+    marginBottom: spacing.sm,
   },
   listItem: {
-    marginBottom: theme.spacing.md,
-  },
-  separator: {
-    height: theme.spacing.sm,
+    marginBottom: spacing.md,
   },
   emptyContainer: {
-    height: 100, // SearchScreen'de kendi empty state'i var
+    minHeight: 100,
+  },
+  emptyContentContainer: {
+    flexGrow: 1,
   },
 });

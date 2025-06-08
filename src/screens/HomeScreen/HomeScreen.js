@@ -1,12 +1,20 @@
-// src/screens/HomeScreen/HomeScreen.js - Çalışan hızlı erişim
+// src/screens/HomeScreen/HomeScreen.js
 import React from 'react';
-import { View, StyleSheet, ScrollView, Dimensions, Linking, Alert } from 'react-native';
-import { Card, Text, Button, Chip, Divider } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Linking, Alert } from 'react-native';
+import { Card, Text, Button, Chip } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
-
-const { width } = Dimensions.get('window');
+import Logo from '../../components/Logo/logo';
+import { 
+  responsiveValue, 
+  fontSize, 
+  spacing, 
+  getPadding,
+  getShadow,
+  isTablet,
+  getColumns
+} from '../../utils/responsive';
 
 export default function HomeScreen({ navigation }) {
   const categories = [
@@ -15,7 +23,7 @@ export default function HomeScreen({ navigation }) {
       name: 'Çerçeveler',
       description: 'Modern ve klasik çerçeve çeşitleri',
       icon: 'image-outline',
-      color: '#2E7D32',
+      color: theme.colors.primary,
       productCount: 150
     },
     {
@@ -23,7 +31,7 @@ export default function HomeScreen({ navigation }) {
       name: 'Paspartolar',
       description: 'Rengarenk paspartu çeşitleri',
       icon: 'layers-outline',
-      color: '#8D6E63',
+      color: theme.colors.primaryDark,
       productCount: 200
     },
     {
@@ -31,7 +39,7 @@ export default function HomeScreen({ navigation }) {
       name: 'Aksesuarlar',
       description: 'Dekoratif aksesuarlar ve yedek parçalar',
       icon: 'construct-outline',
-      color: '#5D4037',
+      color: theme.colors.accent,
       productCount: 100
     },
   ];
@@ -46,27 +54,22 @@ export default function HomeScreen({ navigation }) {
     navigation.navigate('Search', { initialQuery: tag });
   };
 
-  // Öne çıkanlar - featured = true olan ürünler
   const handleFeaturedPress = () => {
-    console.log('🌟 Öne çıkanlar aranıyor...');
     navigation.navigate('Search', { 
       initialQuery: '',
       filterType: 'featured'
     });
   };
 
-  // Popüler ürünler - şimdilik en çok tag'e sahip olanlar
   const handlePopularPress = () => {
-    console.log('🔥 Popüler ürünler aranıyor...');
     navigation.navigate('Search', { 
       initialQuery: '',
       filterType: 'popular'
     });
   };
 
-  // WhatsApp ile iletişim
   const handleContactPress = () => {
-    const phoneNumber = '905551234567'; // Telefon numaranız
+    const phoneNumber = '905551234567';
     const message = 'Merhaba! Ürünleriniz hakkında bilgi almak istiyorum.';
     const whatsappUrl = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
     
@@ -94,16 +97,67 @@ export default function HomeScreen({ navigation }) {
       });
   };
 
+  const renderCategoryCard = (category) => (
+    <Card key={category.id} style={styles.categoryCard}>
+      <Card.Content>
+        <View style={styles.categoryHeader}>
+          <View style={styles.categoryInfo}>
+            <View style={[styles.categoryIconContainer, { backgroundColor: `${category.color}20` }]}>
+              <Ionicons
+                name={category.icon}
+                size={responsiveValue(28, 32, 36)}
+                color={category.color}
+              />
+            </View>
+            <View style={styles.categoryText}>
+              <Text variant="titleLarge" style={styles.categoryName}>
+                {category.name}
+              </Text>
+              <Text variant="bodyMedium" style={styles.categoryDescription}>
+                {category.description}
+              </Text>
+              <Chip
+                mode="outlined"
+                compact
+                style={[styles.productCountChip, { borderColor: category.color }]}
+                textStyle={{ color: category.color, fontSize: fontSize.sm }}
+              >
+                {category.productCount} ürün
+              </Chip>
+            </View>
+          </View>
+        </View>
+      </Card.Content>
+      <Card.Actions>
+        <Button
+          mode="contained"
+          onPress={() => handleCategoryPress(category)}
+          style={[styles.categoryButton, { backgroundColor: category.color }]}
+          contentStyle={styles.categoryButtonContent}
+          labelStyle={{ fontSize: fontSize.md }}
+        >
+          Ürünleri Gör
+        </Button>
+      </Card.Actions>
+    </Card>
+  );
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header Section */}
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+    >
+      {/* Header Section with Logo */}
       <LinearGradient
-        colors={['#2E7D32', '#4CAF50']}
+        colors={theme.colors.headerGradient}
         style={styles.header}
       >
-        <Text variant="headlineLarge" style={styles.headerTitle}>
-          Kakule Katalog
-        </Text>
+        <Logo 
+          size="medium" 
+          showText={true}
+          textStyle={{ color: 'white' }}
+        />
         <Text variant="bodyLarge" style={styles.headerSubtitle}>
           500+ ürünle zengin koleksiyonumuz
         </Text>
@@ -115,49 +169,13 @@ export default function HomeScreen({ navigation }) {
           Kategoriler
         </Text>
 
-        {categories.map((category) => (
-          <Card key={category.id} style={styles.categoryCard}>
-            <Card.Content>
-              <View style={styles.categoryHeader}>
-                <View style={styles.categoryInfo}>
-                  <View style={styles.categoryIconContainer}>
-                    <Ionicons
-                      name={category.icon}
-                      size={32}
-                      color={category.color}
-                    />
-                  </View>
-                  <View style={styles.categoryText}>
-                    <Text variant="titleLarge" style={styles.categoryName}>
-                      {category.name}
-                    </Text>
-                    <Text variant="bodyMedium" style={styles.categoryDescription}>
-                      {category.description}
-                    </Text>
-                    <Chip
-                      mode="outlined"
-                      compact
-                      style={[styles.productCountChip, { borderColor: category.color }]}
-                      textStyle={{ color: category.color }}
-                    >
-                      {category.productCount} ürün
-                    </Chip>
-                  </View>
-                </View>
-              </View>
-            </Card.Content>
-            <Card.Actions>
-              <Button
-                mode="contained"
-                onPress={() => handleCategoryPress(category)}
-                style={[styles.categoryButton, { backgroundColor: category.color }]}
-                contentStyle={styles.categoryButtonContent}
-              >
-                Ürünleri Gör
-              </Button>
-            </Card.Actions>
-          </Card>
-        ))}
+        {isTablet() ? (
+          <View style={styles.categoriesGrid}>
+            {categories.map(renderCategoryCard)}
+          </View>
+        ) : (
+          categories.map(renderCategoryCard)
+        )}
       </View>
 
       {/* Popular Tags Section */}
@@ -176,7 +194,8 @@ export default function HomeScreen({ navigation }) {
               mode="outlined"
               onPress={() => handleTagPress(tag)}
               style={styles.popularTag}
-              icon={() => <Ionicons name="search-outline" size={16} color={theme.colors.primary} />}
+              textStyle={{ fontSize: fontSize.sm }}
+              icon={() => <Ionicons name="search-outline" size={fontSize.md} color={theme.colors.primary} />}
             >
               {tag}
             </Chip>
@@ -184,7 +203,7 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Quick Actions - ÇALIŞAN */}
+      {/* Quick Actions */}
       <View style={styles.section}>
         <Text variant="headlineSmall" style={styles.sectionTitle}>
           Hızlı Erişim
@@ -193,7 +212,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.quickActionsContainer}>
           <Card style={styles.quickActionCard} onPress={handleFeaturedPress}>
             <Card.Content style={styles.quickActionContent}>
-              <Ionicons name="star" size={32} color="#FFD700" />
+              <Ionicons name="star" size={responsiveValue(28, 32, 36)} color="#FFD700" />
               <Text variant="titleMedium" style={styles.quickActionTitle}>
                 Öne Çıkanlar
               </Text>
@@ -205,7 +224,7 @@ export default function HomeScreen({ navigation }) {
 
           <Card style={styles.quickActionCard} onPress={handlePopularPress}>
             <Card.Content style={styles.quickActionContent}>
-              <Ionicons name="trending-up" size={32} color="#FF5722" />
+              <Ionicons name="trending-up" size={responsiveValue(28, 32, 36)} color={theme.colors.primary} />
               <Text variant="titleMedium" style={styles.quickActionTitle}>
                 En Popülerler
               </Text>
@@ -217,11 +236,11 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Contact Section - ÇALIŞAN WhatsApp */}
+      {/* Contact Section */}
       <Card style={styles.contactCard}>
         <Card.Content>
           <View style={styles.contactContent}>
-            <Ionicons name="chatbubble-ellipses" size={40} color="#25D366" />
+            <Ionicons name="chatbubble-ellipses" size={responsiveValue(36, 40, 44)} color="#25D366" />
             <View style={styles.contactText}>
               <Text variant="titleLarge" style={styles.contactTitle}>
                 Teklif Almak İster misiniz?
@@ -236,7 +255,9 @@ export default function HomeScreen({ navigation }) {
           <Button
             mode="contained"
             style={styles.contactButton}
-            icon={() => <Ionicons name="chatbubble-ellipses" size={20} color="white" />}
+            contentStyle={styles.contactButtonContent}
+            labelStyle={{ fontSize: fontSize.md }}
+            icon={() => <Ionicons name="chatbubble-ellipses" size={fontSize.lg} color="white" />}
             onPress={handleContactPress}
           >
             WhatsApp ile İletişim
@@ -254,56 +275,64 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
-    padding: theme.spacing.xl,
-    paddingTop: theme.spacing.lg,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+  scrollContent: {
+    flexGrow: 1,
   },
-  headerTitle: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: theme.spacing.sm,
+  header: {
+    ...getPadding('xl'),
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
+    borderBottomLeftRadius: responsiveValue(20, 24, 28),
+    borderBottomRightRadius: responsiveValue(20, 24, 28),
+    alignItems: 'center',
   },
   headerSubtitle: {
     color: 'white',
     textAlign: 'center',
     opacity: 0.9,
+    fontSize: fontSize.md,
+    marginTop: spacing.sm,
   },
   section: {
-    padding: theme.spacing.md,
+    ...getPadding('md'),
   },
   sectionTitle: {
     color: theme.colors.onBackground,
-    marginBottom: theme.spacing.sm,
+    marginBottom: spacing.sm,
     fontWeight: '600',
+    fontSize: fontSize.xl,
   },
   sectionSubtitle: {
-    color: theme.colors.onBackground,
-    opacity: 0.7,
-    marginBottom: theme.spacing.md,
+    color: theme.colors.textSecondary,
+    marginBottom: spacing.md,
+    fontSize: fontSize.md,
+  },
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -spacing.sm,
   },
   categoryCard: {
-    marginBottom: theme.spacing.md,
-    elevation: 4,
-    borderRadius: 12,
+    marginBottom: spacing.md,
+    borderRadius: responsiveValue(8, 10, 12),
+    ...getShadow(4),
+    width: isTablet() ? '48%' : 'auto',
+    marginHorizontal: isTablet() ? '1%' : 0,
   },
   categoryHeader: {
-    marginBottom: theme.spacing.sm,
+    marginBottom: spacing.sm,
   },
   categoryInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
   categoryIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: theme.colors.primaryContainer,
+    width: responsiveValue(48, 56, 64),
+    height: responsiveValue(48, 56, 64),
+    borderRadius: responsiveValue(24, 28, 32),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: theme.spacing.md,
+    marginRight: spacing.md,
   },
   categoryText: {
     flex: 1,
@@ -311,57 +340,61 @@ const styles = StyleSheet.create({
   categoryName: {
     color: theme.colors.onSurface,
     fontWeight: '600',
-    marginBottom: theme.spacing.xs,
+    marginBottom: spacing.xs,
+    fontSize: fontSize.lg,
   },
   categoryDescription: {
-    color: theme.colors.onSurface,
-    opacity: 0.7,
-    marginBottom: theme.spacing.sm,
+    color: theme.colors.textSecondary,
+    marginBottom: spacing.sm,
+    fontSize: fontSize.sm,
   },
   productCountChip: {
     alignSelf: 'flex-start',
   },
   categoryButton: {
-    borderRadius: 8,
+    borderRadius: responsiveValue(6, 8, 10),
   },
   categoryButtonContent: {
-    paddingVertical: theme.spacing.xs,
+    paddingVertical: spacing.xs,
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: spacing.sm,
   },
   popularTag: {
-    marginBottom: theme.spacing.sm,
+    marginBottom: spacing.sm,
+    backgroundColor: theme.colors.primaryContainer,
   },
   quickActionsContainer: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
+    gap: spacing.md,
   },
   quickActionCard: {
     flex: 1,
-    elevation: 2,
-    borderRadius: 12,
+    ...getShadow(2),
+    borderRadius: responsiveValue(8, 10, 12),
   },
   quickActionContent: {
     alignItems: 'center',
-    padding: theme.spacing.md,
+    padding: spacing.md,
   },
   quickActionTitle: {
-    marginTop: theme.spacing.sm,
-    marginBottom: theme.spacing.xs,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
     textAlign: 'center',
     fontWeight: '600',
+    fontSize: fontSize.md,
   },
   quickActionDescription: {
     textAlign: 'center',
-    opacity: 0.7,
+    color: theme.colors.textSecondary,
+    fontSize: fontSize.sm,
   },
   contactCard: {
-    margin: theme.spacing.md,
-    elevation: 4,
-    borderRadius: 12,
+    margin: spacing.md,
+    ...getShadow(4),
+    borderRadius: responsiveValue(8, 10, 12),
     backgroundColor: theme.colors.primaryContainer,
   },
   contactContent: {
@@ -369,22 +402,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   contactText: {
-    marginLeft: theme.spacing.md,
+    marginLeft: spacing.md,
     flex: 1,
   },
   contactTitle: {
     color: theme.colors.primary,
     fontWeight: '600',
-    marginBottom: theme.spacing.xs,
+    marginBottom: spacing.xs,
+    fontSize: fontSize.lg,
   },
   contactDescription: {
     color: theme.colors.onSurface,
-    opacity: 0.8,
+    fontSize: fontSize.md,
   },
   contactButton: {
-    backgroundColor: '#25D366', // WhatsApp yeşili
+    backgroundColor: '#25D366',
+    borderRadius: responsiveValue(6, 8, 10),
+  },
+  contactButtonContent: {
+    paddingVertical: spacing.xs,
   },
   bottomSpacer: {
-    height: theme.spacing.lg,
+    height: spacing.lg,
   },
 });
