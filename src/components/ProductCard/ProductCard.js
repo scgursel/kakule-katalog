@@ -1,4 +1,4 @@
-// src/components/ProductCard/ProductCard.js
+// src/components/ProductCard/ProductCard.js - Düzeltilmiş versiyon
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Card, Text, Chip, Badge } from 'react-native-paper';
@@ -15,6 +15,12 @@ export default function ProductCard({
   style,
   width: cardWidth 
 }) {
+  // Güvenlik kontrolü
+  if (!product) {
+    console.warn('ProductCard: product is undefined');
+    return null;
+  }
+
   const primaryImage = product.images?.find(img => img.isPrimary) || product.images?.[0];
   
   return (
@@ -57,45 +63,34 @@ export default function ProductCard({
 
         {/* İçerik */}
         <Card.Content style={styles.content}>
-          <Text variant="titleMedium" style={styles.title} numberOfLines={2}>
+          <Text variant="titleSmall" style={styles.title} numberOfLines={2}>
             {product.name}
           </Text>
           
-          <Text variant="bodySmall" style={styles.description} numberOfLines={2}>
+          <Text variant="bodySmall" style={styles.description} numberOfLines={1}>
             {product.shortDescription || product.description}
           </Text>
 
-          {/* Specs */}
-          <View style={styles.specsContainer}>
-            {product.specs?.color && (
-              <Chip mode="outlined" compact style={styles.specChip}>
-                {product.specs.color}
-              </Chip>
-            )}
-            {product.specs?.material && (
-              <Chip mode="outlined" compact style={styles.specChip}>
-                {product.specs.material}
-              </Chip>
-            )}
-          </View>
-
-          {/* Tags (ilk 3 tanesi) */}
+          {/* Sadece Tags - Kompakt */}
           {product.tags && product.tags.length > 0 && (
             <View style={styles.tagsContainer}>
-              {product.tags.slice(0, 3).map((tag, index) => (
-                <Chip 
-                  key={index}
-                  mode="outlined" 
-                  compact 
-                  style={styles.tagChip}
-                  textStyle={styles.tagText}
-                >
-                  {tag}
-                </Chip>
-              ))}
-              {product.tags.length > 3 && (
-                <Text style={styles.moreTagsText}>+{product.tags.length - 3}</Text>
-              )}
+              <View style={styles.tagsRow}>
+                {product.tags.slice(0, 4).map((tag, index) => (
+                  <Chip 
+                    key={index}
+                    mode="outlined" 
+                    compact 
+                    style={styles.tagChip}
+                    textStyle={styles.tagText}
+                    contentStyle={styles.tagContent}
+                  >
+                    {tag}
+                  </Chip>
+                ))}
+                {product.tags.length > 4 && (
+                  <Text style={styles.moreTagsText}>+{product.tags.length - 4}</Text>
+                )}
+              </View>
             </View>
           )}
         </Card.Content>
@@ -146,42 +141,59 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: theme.spacing.sm,
+    paddingBottom: theme.spacing.xs, // Alt padding azaltıldı
   },
   title: {
     fontWeight: '600',
     color: theme.colors.onSurface,
     marginBottom: theme.spacing.xs,
+    lineHeight: 18, // Satır yüksekliği optimize edildi
   },
   description: {
     color: theme.colors.onSurface,
     opacity: 0.7,
-    marginBottom: theme.spacing.sm,
-  },
-  specsContainer: {
-    flexDirection: 'row',
-    gap: theme.spacing.xs,
-    marginBottom: theme.spacing.sm,
-  },
-  specChip: {
-    height: 24,
+    marginBottom: theme.spacing.xs, // Margin azaltıldı
+    lineHeight: 16,
   },
   tagsContainer: {
+    marginBottom: theme.spacing.xs, // Margin azaltıldı
+  },
+  tagsLabel: {
+    color: theme.colors.onSurface,
+    fontWeight: '500',
+    marginBottom: theme.spacing.xs,
+    fontSize: 11,
+  },
+  tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.xs,
+    gap: 3,
     alignItems: 'center',
   },
   tagChip: {
-    height: 20,
+    height: 26,
     backgroundColor: theme.colors.primaryContainer,
+    paddingHorizontal: 4,
+    marginVertical: 1,
+    marginHorizontal: 1,
+    minWidth: 30,
   },
   tagText: {
-    fontSize: 10,
-    color: theme.colors.primary,
-  },
-  moreTagsText: {
-    fontSize: 10,
+    fontSize: 12,
     color: theme.colors.primary,
     fontWeight: '500',
+    lineHeight: 12,
+  },
+  tagContent: {
+    paddingHorizontal: 2,
+    paddingVertical: 2,
+    marginHorizontal: 0,
+    marginVertical: 0,
+  },
+  moreTagsText: {
+    fontSize: 9,
+    color: theme.colors.primary,
+    fontWeight: '500',
+    marginLeft: 2,
   },
 });

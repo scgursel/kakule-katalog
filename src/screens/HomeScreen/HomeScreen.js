@@ -1,6 +1,6 @@
-// src/screens/HomeScreen/HomeScreen.js
+// src/screens/HomeScreen/HomeScreen.js - Çalışan hızlı erişim
 import React from 'react';
-import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, Dimensions, Linking, Alert } from 'react-native';
 import { Card, Text, Button, Chip, Divider } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,11 +38,60 @@ export default function HomeScreen({ navigation }) {
 
   const popularTags = ['vintage', 'modern', 'ahşap', 'metal', 'yeşil', 'beyaz'];
 
- const handleCategoryPress = (category) => {
-  navigation.navigate('Category', { category });
-};
+  const handleCategoryPress = (category) => {
+    navigation.navigate('Category', { category });
+  };
+
   const handleTagPress = (tag) => {
     navigation.navigate('Search', { initialQuery: tag });
+  };
+
+  // Öne çıkanlar - featured = true olan ürünler
+  const handleFeaturedPress = () => {
+    console.log('🌟 Öne çıkanlar aranıyor...');
+    navigation.navigate('Search', { 
+      initialQuery: '',
+      filterType: 'featured'
+    });
+  };
+
+  // Popüler ürünler - şimdilik en çok tag'e sahip olanlar
+  const handlePopularPress = () => {
+    console.log('🔥 Popüler ürünler aranıyor...');
+    navigation.navigate('Search', { 
+      initialQuery: '',
+      filterType: 'popular'
+    });
+  };
+
+  // WhatsApp ile iletişim
+  const handleContactPress = () => {
+    const phoneNumber = '905551234567'; // Telefon numaranız
+    const message = 'Merhaba! Ürünleriniz hakkında bilgi almak istiyorum.';
+    const whatsappUrl = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
+    
+    Linking.canOpenURL(whatsappUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(whatsappUrl);
+        } else {
+          Alert.alert(
+            'WhatsApp Bulunamadı',
+            'WhatsApp uygulaması yüklü değil. Telefon numaramız: +90 555 123 45 67',
+            [
+              { text: 'Tamam', style: 'default' },
+              { 
+                text: 'Aramak İçin Tıkla', 
+                onPress: () => Linking.openURL(`tel:${phoneNumber}`)
+              }
+            ]
+          );
+        }
+      })
+      .catch((err) => {
+        console.error('WhatsApp açılamadı:', err);
+        Alert.alert('Hata', 'İletişim başlatılamadı. Lütfen manuel olarak arayın: +90 555 123 45 67');
+      });
   };
 
   return (
@@ -127,7 +176,7 @@ export default function HomeScreen({ navigation }) {
               mode="outlined"
               onPress={() => handleTagPress(tag)}
               style={styles.popularTag}
-              icon="search"
+              icon={() => <Ionicons name="search-outline" size={16} color={theme.colors.primary} />}
             >
               {tag}
             </Chip>
@@ -135,50 +184,50 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Quick Actions */}
+      {/* Quick Actions - ÇALIŞAN */}
       <View style={styles.section}>
         <Text variant="headlineSmall" style={styles.sectionTitle}>
           Hızlı Erişim
         </Text>
 
         <View style={styles.quickActionsContainer}>
-          <Card style={styles.quickActionCard}>
+          <Card style={styles.quickActionCard} onPress={handleFeaturedPress}>
             <Card.Content style={styles.quickActionContent}>
               <Ionicons name="star" size={32} color="#FFD700" />
               <Text variant="titleMedium" style={styles.quickActionTitle}>
                 Öne Çıkanlar
               </Text>
               <Text variant="bodySmall" style={styles.quickActionDescription}>
-                En popüler ürünler
+                Seçili ürünlerimiz
               </Text>
             </Card.Content>
           </Card>
 
-          <Card style={styles.quickActionCard}>
+          <Card style={styles.quickActionCard} onPress={handlePopularPress}>
             <Card.Content style={styles.quickActionContent}>
-              <Ionicons name="sparkles" size={32} color="#9C27B0" />
+              <Ionicons name="trending-up" size={32} color="#FF5722" />
               <Text variant="titleMedium" style={styles.quickActionTitle}>
-                Yeni Ürünler
+                En Popülerler
               </Text>
               <Text variant="bodySmall" style={styles.quickActionDescription}>
-                Son eklenenler
+                Çok tercih edilenler
               </Text>
             </Card.Content>
           </Card>
         </View>
       </View>
 
-      {/* Contact Section */}
+      {/* Contact Section - ÇALIŞAN WhatsApp */}
       <Card style={styles.contactCard}>
         <Card.Content>
           <View style={styles.contactContent}>
-            <Ionicons name="chatbubble-ellipses" size={40} color="#2E7D32" />
+            <Ionicons name="chatbubble-ellipses" size={40} color="#25D366" />
             <View style={styles.contactText}>
               <Text variant="titleLarge" style={styles.contactTitle}>
                 Teklif Almak İster misiniz?
               </Text>
               <Text variant="bodyMedium" style={styles.contactDescription}>
-                Uzman ekibimizle iletişime geçin
+                WhatsApp üzerinden hızlıca iletişime geçin
               </Text>
             </View>
           </View>
@@ -187,9 +236,10 @@ export default function HomeScreen({ navigation }) {
           <Button
             mode="contained"
             style={styles.contactButton}
-            icon="phone"
+            icon={() => <Ionicons name="chatbubble-ellipses" size={20} color="white" />}
+            onPress={handleContactPress}
           >
-            Bize Ulaşın
+            WhatsApp ile İletişim
           </Button>
         </Card.Actions>
       </Card>
@@ -332,7 +382,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   contactButton: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#25D366', // WhatsApp yeşili
   },
   bottomSpacer: {
     height: theme.spacing.lg,
