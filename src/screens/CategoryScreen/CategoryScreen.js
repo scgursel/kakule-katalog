@@ -1,11 +1,13 @@
 // src/screens/CategoryScreen/CategoryScreen.js - ProductList kullanan versiyon
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+
+import { View, StyleSheet, Platform} from 'react-native';
 import { Text, ActivityIndicator, Searchbar } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 import ProductList from '../../components/ProductList/ProductList';
 import productService from '../../services/productService';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CategoryScreen({ route, navigation }) {
   const { category } = route.params;
@@ -13,6 +15,16 @@ export default function CategoryScreen({ route, navigation }) {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    // Başlık için navigationOptions
+    navigation.setOptions({
+      title: category?.name || 'Kategori',
+      headerStyle: {
+        backgroundColor: category?.color || theme.colors.primary,
+      },
+    });
+  }, [category]);
 
   useEffect(() => {
     loadProducts();
@@ -24,7 +36,7 @@ export default function CategoryScreen({ route, navigation }) {
       const normalizedQuery = normalizeText(searchQuery);
       const filtered = products.filter(product => {
         if (!product.tags || !Array.isArray(product.tags)) return false;
-        
+
         return product.tags.some(tag => {
           const normalizedTag = normalizeText(tag);
           return normalizedTag.includes(normalizedQuery);
@@ -64,7 +76,7 @@ export default function CategoryScreen({ route, navigation }) {
 
       const categoryProducts = await productService.getProductsByCategory(category.id);
       console.log('✅ Loaded products:', categoryProducts.length);
-      
+
       setProducts(categoryProducts);
       setFilteredProducts(categoryProducts);
     } catch (error) {
@@ -89,59 +101,81 @@ export default function CategoryScreen({ route, navigation }) {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text variant="headlineSmall" style={styles.categoryTitle}>
-          {category.name}
-        </Text>
-        <Text variant="bodyMedium" style={styles.categoryDescription}>
-          {category.description}
-        </Text>
-        <Text variant="bodySmall" style={styles.productCount}>
-          {filteredProducts.length} ürün bulundu
-        </Text>
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
 
-      {/* Arama */}
-      <View style={styles.searchContainer}>
-        <Searchbar
-          placeholder="Etiketlerde ara... (örn: 20mm, ceviz, inox)"
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchbar}
-        />
-      </View>
-
-      {/* ProductList Kullan - Tek Kolon */}
-      {filteredProducts.length > 0 ? (
-        <ProductList
-          products={filteredProducts}
-          onProductPress={handleProductPress}
-          numColumns={1} // Tek kolon - daha detaylı görünüm
-        />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="search" size={64} color={theme.colors.disabled} />
-          <Text variant="headlineSmall" style={styles.emptyTitle}>
-            {searchQuery ? 'Sonuç Bulunamadı' : 'Ürün Bulunamadı'}
+      <View style={styles.container}>
+        {/* Header - Başlık zaten üst barda gösteriliyor, sadece açıklama ve ürün sayısı göster */}
+        <View style={styles.header}>
+          <Text variant="bodyMedium" style={styles.categoryDescription}>
+            {category.description}
           </Text>
-          <Text variant="bodyMedium" style={styles.emptyDescription}>
-            {searchQuery 
-              ? `"${searchQuery}" için eşleşen ürün bulunamadı`
-              : 'Bu kategoride henüz ürün bulunmuyor'
-            }
+          <Text variant="bodySmall" style={styles.productCount}>
+            {filteredProducts.length} ürün bulundu
           </Text>
         </View>
-      )}
-    </View>
+
+        {/* Arama */}
+        <View style={styles.searchContainer}>
+          <Searchbar
+            placeholder="Etiketlerde ara... (örn: 20mm, ceviz, inox)"
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={styles.searchbar}
+          />
+        </View>
+
+        {/* ProductList Kullan - Tek Kolon */}
+        {filteredProducts.length > 0 ? (
+          <ProductList
+            products={filteredProducts}
+            onProductPress={handleProductPress}
+            numColumns={1} // Tek kolon - daha detaylı görünüm
+          />
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="search" size={64} color={theme.colors.disabled} />
+            <Text variant="headlineSmall" style={styles.emptyTitle}>
+              {searchQuery ? 'Sonuç Bulunamadı' : 'Ürün Bulunamadı'}
+            </Text>
+            <Text variant="bodyMedium" style={styles.emptyDescription}>
+              {searchQuery
+                ? `"${searchQuery}" için eşleşen ürün bulunamadı`
+                : 'Bu kategoride henüz ürün bulunmuyor'
+              }
+            </Text>
+          </View>
+        )}
+      </View>
+    </SafeAreaView>
+
   );
 }
 
 const styles = StyleSheet.create({
+  // Stiller için:
+  header: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
+    elevation: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
+
   },
   loadingContainer: {
     flex: 1,
